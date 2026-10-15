@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matchboxd — ton prochain film, d'après ton Letterboxd</title>
+  <meta name="description" content="Donne ton pseudo Letterboxd : Matchboxd analyse tes notes, tes genres et tes réalisateurs préférés, et te recommande des films faits pour toi." />
+  <meta name="theme-color" content="#14181c" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Matchboxd — ton prochain film, d'après ton Letterboxd" />
+  <meta property="og:description" content="Analyse ton profil Letterboxd et découvre les films faits pour toi." />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a href="/" class="logo" aria-label="Matchboxd, accueil">
+        <span class="dots"><i class="o"></i><i class="g"></i><i class="b"></i></span>
+        <span class="wordmark">Matchboxd</span>
+      </a>
+      <nav class="nav">
+        <a href="#how" class="nav-link">Comment ça marche</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="ambient" id="ambient" aria-hidden="true"><i class="amb"></i><i class="amb"></i></div>
+  <div class="poster-wall" id="poster-wall" aria-hidden="true"></div>
+  <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+
+  <main>
+    <!-- Accueil -->
+    <section class="hero wrap" id="hero">
+      <h1 class="hero-title">
+        Donne ton pseudo.<br />
+        On lit tes notes.<br />
+        On te trouve ton prochain film.
+      </h1>
+      <p class="hero-sub">Matchboxd analyse ton profil Letterboxd : ce que tu notes bien, ce que tu détestes, les genres et les réalisateurs qui reviennent. Puis on te sort des films faits pour toi.</p>
+
+      <form class="search" id="form" autocomplete="off">
+        <label class="search-field">
+          <span class="search-prefix">letterboxd.com/</span>
+          <input id="user" name="user" type="text" placeholder="ton-pseudo" spellcheck="false" autocapitalize="off" required />
+        </label>
+        <button class="btn btn-green" type="submit">Analyser mon profil</button>
+      </form>
+      <div class="ext-status" id="ext-status">
+        <p class="ext-on" id="ext-on" hidden><span class="ext-dot"></span>Extension Matchboxd active : ton profil sera lu en entier.</p>
+        <details class="ext-off" id="ext-off">
+          <summary>Pour que ce bouton lise <b>tous</b> tes films, installe l'extension Matchboxd (1 min)</summary>
+          <ol>
+            <li><a class="btn btn-ghost btn-sm ext-download" href="/extension.zip" download>Télécharger l'extension</a> puis décompresse le fichier (clic droit → Extraire tout)</li>
+            <li>Dans Chrome (ou Edge, Brave…), ouvre <code>chrome://extensions</code> <button type="button" class="copy" data-copy="chrome://extensions">Copier</button></li>
+            <li>Active le <b>Mode développeur</b> (interrupteur en haut à droite)</li>
+            <li>Clique sur <b>Charger l'extension non empaquetée</b> et choisis le dossier <code>matchboxd-extension</code></li>
+            <li>Recharge cette page : un message vert confirme que l'extension est active</li>
+          </ol>
+          <p class="ext-note">L'extension ne fait qu'une chose : lire tes pages de films sur letterboxd.com depuis ton navigateur, quand tu lances une analyse ici. Elle ne marche que sur ordinateur.</p>
+        </details>
+      </div>
+
+      <div class="import" id="import">
+        <div class="or"><span>pour analyser tous tes films</span></div>
+        <div class="full-read">
+          <div class="full-read-text">
+            <strong>Lire tout mon profil</strong>
+            <ol>
+              <li>Glisse ce bouton dans ta barre de favoris</li>
+              <li>Va sur ta page Letterboxd (letterboxd.com/ton-pseudo)</li>
+              <li>Clique sur le favori : on lit tous tes films</li>
+            </ol>
+          </div>
+          <a class="bookmarklet" id="bookmarklet" href="#" title="Glisse-moi dans ta barre de favoris">
+            <span class="dots"><i class="o"></i><i class="g"></i><i class="b"></i></span>Matchboxd
+          </a>
+        </div>
+        <div class="or or-small"><span>ou importe ton export</span></div>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="file" accept=".zip,.csv" multiple />
+          <span class="dropzone-icon" aria-hidden="true">↑</span>
+          <span class="dropzone-text">
+            <strong>Importe ton export Letterboxd</strong>
+            <span>Glisse le fichier .zip ici, ou clique pour le choisir</span>
+          </span>
+        </label>
+        <details class="import-help">
+          <summary>Où trouver mon export ?</summary>
+          <p>Sur letterboxd.com : <b>Settings → Data → Export your data</b>. Tu reçois un fichier .zip, pas besoin de le décompresser.</p>
+          <p>Le fichier est lu dans ton navigateur. Seuls les titres, années, notes et likes sont utilisés pour l'analyse.</p>
+        </details>
+      </div>
+
+      <p class="form-error" id="error" role="alert" hidden></p>
+
+      <div class="loader" id="loader" hidden>
+        <div class="reel" id="reel" aria-hidden="true"></div>
+        <p class="reel-title" id="reel-title" aria-hidden="true"></p>
+        <div class="loader-dots" aria-hidden="true"><i class="o"></i><i class="g"></i><i class="b"></i></div>
+        <ol class="steps" id="steps" aria-hidden="true">
+          <li data-step="read">Lecture</li>
+          <li data-step="films">Tes films</li>
+          <li data-step="explore">Exploration</li>
+          <li data-step="rank">Classement</li>
+        </ol>
+        <div class="loader-bar"><span id="loader-fill"></span></div>
+        <p class="loader-label" id="loader-label">Connexion à Letterboxd…</p>
+      </div>
+    </section>
+
+    <!-- Résultats -->
+    <section class="results wrap" id="results" hidden></section>
+
+    <section class="how wrap" id="how">
+      <h2 class="section-heading">Comment ça marche</h2>
+      <ol class="how-list">
+        <li><b>On lit ton profil</b><span>Tes derniers films vus via ton pseudo, ou tout ton historique via ton export.</span></li>
+        <li><b>On épluche chaque film</b><span>Genres, réalisateur, casting, pays, décennie.</span></li>
+        <li><b>On calcule tes goûts</b><span>Ce que tu notes au-dessus et en dessous de ta moyenne.</span></li>
+        <li><b>On cherche des films proches</b><span>Et on écarte ceux qui ressemblent à ce que tu n'aimes pas.</span></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <span>Matchboxd est un projet indépendant, non affilié à Letterboxd. Données lues depuis les pages publiques de letterboxd.com.</span>
+    <a href="/mentions.html">Mentions &amp; confidentialité</a>
+  </footer>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-scrim" data-close></div>
+    <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title" id="modal-card"></article>
+  </div>
+
+  <script src="/export.js"></script>
+  <script src="/fx.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

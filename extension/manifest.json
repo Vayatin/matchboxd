@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Matchboxd",
+  "version": "1.0.0",
+  "description": "Permet à Matchboxd (localhost) de lire tous les films de ton profil Letterboxd depuis ton navigateur.",
+  "permissions": ["scripting"],
+  "host_permissions": ["https://letterboxd.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
