@@ -1,0 +1,19 @@
+# Plan de déploiement Render (« Blueprint ») : Render lit ce fichier et crée le site tout seul.
+services:
+  - type: web
+    name: matchboxd
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Analyses en parallèle (tous visiteurs) et analyses max par visiteur / 10 min
+      - key: MAX_RUNNING
+        value: "3"
+      - key: RATE_MAX
+        value: "10"

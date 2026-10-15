@@ -1,0 +1,14 @@
+{
+  "name": "matchboxd",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Recommandations de films à partir d'un profil Letterboxd",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "preparer-github": "node scripts/preparer-github.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
