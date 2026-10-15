@@ -12,6 +12,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
+      # L'offre gratuite a 512 Mo : on laisse de la marge au système
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=384"
       # Analyses en parallèle (tous visiteurs) et analyses max par visiteur / 10 min
       - key: MAX_RUNNING
         value: "3"
