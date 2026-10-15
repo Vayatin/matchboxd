@@ -255,6 +255,7 @@ async function analyseImport(data, send) {
 function errorMessage(err, user) {
   if (err.status === 404 && user) return `Aucun compte Letterboxd « ${user} ». Vérifie l'orthographe.`;
   if (err.status === 422) return err.message;
+  if (err.blocked) return "Letterboxd limite en ce moment l'accès de Matchboxd. Réessaie dans quelques minutes.";
   if (err instanceof LetterboxdError) return `Letterboxd n'a pas répondu (${err.message}). Réessaie dans un instant.`;
   console.error(err);
   return "Une erreur est survenue pendant l'analyse.";
@@ -433,6 +434,41 @@ async function handleImage(res, url) {
   }
 }
 
+// --- Diagnostic : comment le serveur voit le visiteur, et Letterboxd répond-il depuis l'hébergeur ? ---
+let lbProbe = { at: 0, result: null };
+async function probeLetterboxd() {
+  if (Date.now() - lbProbe.at < 60000 && lbProbe.result) return lbProbe.result; // 1 test par minute max
+  const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+  const check = async (p) => {
+    try {
+      const r = await fetch("https://letterboxd.com" + p, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(15000) });
+      const t = await r.text();
+      return `${r.status}${/Just a moment/.test(t) ? " (challenge Cloudflare)" : ""}`;
+    } catch (e) {
+      return "erreur : " + e.message;
+    }
+  };
+  const result = { "/karsten/films/": await check("/karsten/films/"), "/film/parasite-2019/": await check("/film/parasite-2019/") };
+  lbProbe = { at: Date.now(), result };
+  return result;
+}
+async function handleDiag(req, res) {
+  const body = {
+    ipVue: clientIp(req),
+    entetes: {
+      "true-client-ip": req.headers["true-client-ip"] || null,
+      "cf-connecting-ip": req.headers["cf-connecting-ip"] || null,
+      "x-forwarded-for": req.headers["x-forwarded-for"] || null,
+      "x-real-ip": req.headers["x-real-ip"] || null,
+    },
+    analysesEnCours: running,
+    fileAttente: queue.length,
+    visiteursActifs: activeByIp.size,
+    letterboxd: await probeLetterboxd(),
+  };
+  res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }).end(JSON.stringify(body, null, 2));
+}
+
 // --- Extension Chrome, réglée automatiquement sur l'adresse de ce site ---
 const EXTENSION_DIR = path.join(__dirname, "extension");
 function siteOrigin(req) {
@@ -508,6 +544,7 @@ http
       return res.writeHead(400).end();
     }
     if (url.pathname === "/healthz") return res.writeHead(200, { "Content-Type": "text/plain" }).end("ok");
+    if (url.pathname === "/api/diag") return handleDiag(req, res);
     if (url.pathname === "/api/analyse") return handleAnalyse(req, res, url);
     if (url.pathname === "/api/import" && req.method === "POST") return handleImport(req, res);
     if (url.pathname === "/img") return handleImage(res, url);
